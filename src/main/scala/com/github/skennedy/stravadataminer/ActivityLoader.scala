@@ -1,7 +1,7 @@
 package com.github.skennedy.stravadataminer
 
-import akka.actor.{Props, Actor, ActorRef}
-import kiambogo.scrava.models.{Streams, PersonalActivitySummary}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import kiambogo.scrava.models.PersonalActivitySummary
 
 object ActivityLoader {
   def props(api: ActorRef, target: ActorRef, pageSize: Int = 200): Props = Props(new ActivityLoader(api, target, pageSize))
@@ -10,7 +10,7 @@ object ActivityLoader {
   
 }
 
-class ActivityLoader(api: ActorRef, target: ActorRef, pageSize: Int) extends Actor {
+class ActivityLoader(api: ActorRef, target: ActorRef, pageSize: Int) extends Actor with ActorLogging {
 
   var currentPageNumber: Option[Int] = None
   var outstandingActivities: Map[Int, PersonalActivitySummary] = Map()
@@ -36,6 +36,10 @@ class ActivityLoader(api: ActorRef, target: ActorRef, pageSize: Int) extends Act
       maybeSendResult()
 
     case StravaApi.ActivityStreamResponse(activityId, data) =>
+
+      log.debug("Got data for activity {}", activityId)
+
+      data.foreach((s) => log.debug("{}.length = {}", s.`type`, s.data.length))
 
       val activity = outstandingActivities(activityId)
       loadedActivities += (activityId -> Activity(activity, data))

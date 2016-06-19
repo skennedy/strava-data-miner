@@ -1,0 +1,18 @@
+<configuration>
+
+    <statusListener class="ch.qos.logback.core.status.OnConsoleStatusListener" />
+
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-5level [%-40.40X{akkaSource}][%-30.30logger{0}] %m%n</pattern>
+            <immediateFlush>true</immediateFlush>
+        </encoder>
+    </appender>
+
+
+    <!-- NOTE: akka logging framework also has its own log level set in application.conf -->
+    <root level="DEBUG">
+        <appender-ref ref="console" />
+    </root>
+
+</configuration>
