@@ -1,22 +1,20 @@
 package com.github.skennedy.stravadataminer
 
 import akka.actor.{Props, Actor, ActorRef}
-import com.github.skennedy.stravadataminer.ActivityLoader.ActivityWithData
 import kiambogo.scrava.models.{Streams, PersonalActivitySummary}
 
 object ActivityLoader {
   def props(api: ActorRef, target: ActorRef, pageSize: Int = 200): Props = Props(new ActivityLoader(api, target, pageSize))
 
-  case class LoadedActivities(activities: Map[Int, ActivityWithData])
+  case class LoadedActivities(activities: Map[Int, Activity])
   
-  case class ActivityWithData(activity: PersonalActivitySummary, data: List[Streams])
 }
 
 class ActivityLoader(api: ActorRef, target: ActorRef, pageSize: Int) extends Actor {
 
   var currentPageNumber: Option[Int] = None
   var outstandingActivities: Map[Int, PersonalActivitySummary] = Map()
-  var loadedActivities: Map[Int, ActivityWithData] = Map()
+  var loadedActivities: Map[Int, Activity] = Map()
 
   requestNextPage()
 
@@ -35,17 +33,23 @@ class ActivityLoader(api: ActorRef, target: ActorRef, pageSize: Int) extends Act
       else
         currentPageNumber = None
 
+      maybeSendResult()
+
     case StravaApi.ActivityStreamResponse(activityId, data) =>
 
       val activity = outstandingActivities(activityId)
-      loadedActivities += (activityId -> ActivityWithData(activity, data))
+      loadedActivities += (activityId -> Activity(activity, data))
 
       outstandingActivities -= activityId
 
-      if (currentPageNumber.isEmpty && outstandingActivities.isEmpty) {
-        target ! ActivityLoader.LoadedActivities(loadedActivities)
-      }
+      maybeSendResult()
 
+  }
+
+  def maybeSendResult(): Unit = {
+    if (currentPageNumber.isEmpty && outstandingActivities.isEmpty) {
+      target ! ActivityLoader.LoadedActivities(loadedActivities)
+    }
   }
 
   def requestNextPage() = {

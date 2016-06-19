@@ -2,9 +2,9 @@ package com.github.skennedy.stravadataminer
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{TestKit, TestProbe}
-import com.github.skennedy.stravadataminer.ActivityLoader.ActivityWithData
 import kiambogo.scrava.models.Distance
 import org.scalatest.{FlatSpecLike, Matchers}
+
 import scala.concurrent.duration._
 
 class ActivityLoaderSpec extends TestKit(ActorSystem("ActivityMinerSpec")) with FlatSpecLike with Matchers with StravaApiStubs {
@@ -132,9 +132,9 @@ class ActivityLoaderSpec extends TestKit(ActorSystem("ActivityMinerSpec")) with 
     // then
 
     target.expectMsg(ActivityLoader.LoadedActivities(Map(
-      1 -> ActivityWithData(activity1, activityData1),
-      2 -> ActivityWithData(activity2, activityData2),
-      3 -> ActivityWithData(activity3, activityData3)
+      1 -> Activity(activity1, activityData1),
+      2 -> Activity(activity2, activityData2),
+      3 -> Activity(activity3, activityData3)
     )))
 
   }
@@ -154,14 +154,28 @@ class ActivityLoaderSpec extends TestKit(ActorSystem("ActivityMinerSpec")) with 
     // then
 
     target.expectMsg(ActivityLoader.LoadedActivities(Map(
-      1 -> ActivityWithData(activity1, activityData1),
-      2 -> ActivityWithData(activity2, activityData2),
-      3 -> ActivityWithData(activity3, activityData3)
+      1 -> Activity(activity1, activityData1),
+      2 -> Activity(activity2, activityData2),
+      3 -> Activity(activity3, activityData3)
     )))
 
   }
 
-  def constructTestActor: ActorRef = {
+
+  it should "send empty loaded activities to target when no activities returned" in {
+
+    // before
+    val loader = constructTestActor
+
+    // when
+    loader ! StravaApi.ActivitiesResponse(List())
+
+    // then
+    target.expectMsg(ActivityLoader.LoadedActivities(Map()))
+  }
+
+
+    def constructTestActor: ActorRef = {
     system.actorOf(ActivityLoader.props(api.ref, target.ref, pageSize))
   }
 }
