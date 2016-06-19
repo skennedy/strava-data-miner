@@ -11,6 +11,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" % "akka-slf4j_2.11" % "2.4.7",
   "ch.qos.logback" % "logback-classic" % "1.1.3",
   "ch.qos.logback" % "logback-core" % "1.1.3",
+  "kiambogo" % "scrava_2.11" % "1.1.5",
 
   "org.scalatest" % "scalatest_2.11" % "2.2.5" % "test",
   "org.scalamock" % "scalamock-scalatest-support_2.11" % "3.2" % "test",
