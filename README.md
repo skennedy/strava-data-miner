@@ -45,3 +45,13 @@ It is implemented in Scala and Akka. The main actors are:
             - given the Speed data stream and a Slice object it calculates the average of that data
             - resulting SliceValue objects are sent back to parent
             - constructed using a Router for parallelism
+
+## TODO ##
+
+- More tests!
+    - I ran out of time so ended up testing the main miner class manually
+- Generalize the miner
+    - should be able to use other data streams instead of Speed (e.g. Power, Heartrate)
+        - so we can do Max Average Heartrate over 5 minutes
+    - should also be able to use other data streams instead of Time (e.g. Distance)
+        - so we can do Max Average Speed over 1km
