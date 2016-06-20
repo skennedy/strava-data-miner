@@ -55,3 +55,5 @@ It is implemented in Scala and Akka. The main actors are:
         - so we can do Max Average Heartrate over 5 minutes
     - should also be able to use other data streams instead of Time (e.g. Distance)
         - so we can do Max Average Speed over 1km
+- User interface
+    - CLI or Web frontend to send data requests
