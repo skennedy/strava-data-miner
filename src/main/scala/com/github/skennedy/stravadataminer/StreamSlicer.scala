@@ -1,39 +1,42 @@
 package com.github.skennedy.stravadataminer
 
-import akka.actor.{Actor, Props}
+import akka.actor.{Actor, ActorRef, Props}
+
+import scala.annotation.tailrec
 
 object StreamSlicer {
-  def props[T : Numeric]: Props = Props(new StreamSlicer[T])
+  def props[T : Numeric](data: Seq[T], target: ActorRef): Props = Props(new StreamSlicer[T](data, target))
 
-  case class SliceData[T : Numeric](data: Seq[T], sliceSize: T)
-
-  case class Slice[T : Numeric](data: Seq[T], startIndex: Int, endIndex: Int)
+  case class SliceData[T : Numeric](sliceSize: T)
 
 }
 
-class StreamSlicer[T : Numeric] extends Actor {
+class StreamSlicer[T : Numeric](data: Seq[T], target: ActorRef) extends Actor {
 
   import StreamSlicer._
 
   override def receive: Receive = {
-    case SliceData(data: Seq[T], sliceSize: T) =>
-      findSlices(data, sliceSize, 0, 0)
+    case SliceData(sliceSize: T) =>
+      findSlices(sliceSize, 0, 0)
   }
 
-  def findSlices(data: Seq[T], sliceSize: T, startIndex: Int, lastEndIndex: Int): Unit = {
-    val endIndex = findSliceEnd(data, sliceSize, startIndex, lastEndIndex)
-    if (endIndex != -1) {
-      sender() ! Slice(data, startIndex, endIndex)
+  @tailrec
+  private def findSlices(sliceSize: T, startIndex: Int, lastEndIndex: Int): Unit = {
+    val endIndex = findSliceEnd(sliceSize, startIndex, lastEndIndex)
+    if (endIndex > 0) {
+      target ! Slice(startIndex, endIndex)
       if (startIndex < data.length)
-        findSlices(data, sliceSize, startIndex + 1, endIndex)
+        findSlices(sliceSize, startIndex + 1, endIndex)
+    } else {
+      target ! SliceEnd
     }
   }
 
-  def findSliceEnd(data: Seq[T], sliceSize: T, start: Int, from: Int)(implicit num: Numeric[T]): Int = {
+  def findSliceEnd(sliceSize: T, start: Int, from: Int)(implicit num: Numeric[T]): Int = {
     import num._
     def windowOverSize(dataPoint: T): Boolean = {
       dataPoint - data(start) >= sliceSize
     }
-    data.indexWhere(windowOverSize, from)
+    data.indexWhere(windowOverSize, from) + 1 // so we include the last value
   }
 }

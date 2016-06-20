@@ -176,6 +176,6 @@ class ActivityLoaderSpec extends TestKit(ActorSystem("ActivityMinerSpec")) with 
 
 
     def constructTestActor: ActorRef = {
-    system.actorOf(ActivityLoader.props(api.ref, target.ref, pageSize))
+    system.actorOf(ActivityLoader.props(api.ref, target.ref, pageSize=pageSize))
   }
 }

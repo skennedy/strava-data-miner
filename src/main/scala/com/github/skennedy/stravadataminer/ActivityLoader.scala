@@ -10,6 +10,12 @@ object ActivityLoader {
   
 }
 
+/**
+  * Actor which handles loading all activitiy data streams from Strava.
+  *
+  * It does this by firstly requesting pages of activity summaries, then for each activity requesting
+  * the data streams.
+  */
 class ActivityLoader(api: ActorRef, target: ActorRef, pageSize: Int) extends Actor with ActorLogging {
 
   var currentPageNumber: Option[Int] = None
@@ -22,8 +28,10 @@ class ActivityLoader(api: ActorRef, target: ActorRef, pageSize: Int) extends Act
     case StravaApi.ActivitiesResponse(activities) =>
 
       def requestData(activity: PersonalActivitySummary) = {
-        outstandingActivities = outstandingActivities + (activity.id -> activity)
-        api ! StravaApi.ActivityStreamRequest(activity.id)
+        if (activity.`type` == "Ride" && !activity.manual) {
+          outstandingActivities = outstandingActivities + (activity.id -> activity)
+          api ! StravaApi.ActivityStreamRequest(activity.id)
+        }
       }
 
       activities foreach requestData
@@ -35,14 +43,24 @@ class ActivityLoader(api: ActorRef, target: ActorRef, pageSize: Int) extends Act
 
       maybeSendResult()
 
+    case StravaApi.ActivitiesFailure(exception) =>
+      currentPageNumber = None
+      maybeSendResult()
+
     case StravaApi.ActivityStreamResponse(activityId, data) =>
 
       log.debug("Got data for activity {}", activityId)
 
-      data.foreach((s) => log.debug("{}.length = {}", s.`type`, s.data.length))
-
       val activity = outstandingActivities(activityId)
       loadedActivities += (activityId -> Activity(activity, data))
+
+      outstandingActivities -= activityId
+
+      maybeSendResult()
+
+    case StravaApi.ActivityStreamFailure(activityId, exception) =>
+
+      log.warning("Failed to retrieve activity {}: {}", activityId, exception.getMessage)
 
       outstandingActivities -= activityId
 
@@ -52,6 +70,7 @@ class ActivityLoader(api: ActorRef, target: ActorRef, pageSize: Int) extends Act
 
   def maybeSendResult(): Unit = {
     if (currentPageNumber.isEmpty && outstandingActivities.isEmpty) {
+      log.info("Loaded {} activities", loadedActivities.size)
       target ! ActivityLoader.LoadedActivities(loadedActivities)
     }
   }

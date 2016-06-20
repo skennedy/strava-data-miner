@@ -1,6 +1,6 @@
 # Strava Data Miner #
 
-Setup instructions:
+## Setup instructions ##
 - install scrava (Strava API library)
  - git clone https://github.com/kiambogo/scrava.git
  - cd scrava
@@ -9,3 +9,7 @@ Setup instructions:
  - git clone https://github.com/skennedy/strava-data-miner.git
  - cd strava-data-miner
  - sbt run
+
+## Explanation ##
+
+The application
