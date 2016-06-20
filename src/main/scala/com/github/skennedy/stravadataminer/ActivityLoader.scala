@@ -22,6 +22,7 @@ class ActivityLoader(api: ActorRef, target: ActorRef, pageSize: Int) extends Act
   var outstandingActivities: Map[Int, PersonalActivitySummary] = Map()
   var loadedActivities: Map[Int, Activity] = Map()
 
+  log.info("Loading activities...")
   requestNextPage()
 
   override def receive: Receive = {
